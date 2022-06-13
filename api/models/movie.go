@@ -12,9 +12,9 @@ type Movie struct {
 	Location     string `gorm:"type:varchar(75)"`
 	Poster       []byte
 	Teaser       string `grom:"type:varchar(512)"`
-	UserId       uint64
+	UserId       uint
 	User         User `gorm:"foreignKey:UserId"`
-	GenreId      uint64
+	GenreId      uint
 	Genre        Genre `gorm:"foreignKey:GenreId"`
 	Comments     []Comment
 	Directors    []Director `gorm:"many2many:movies_directors;"`

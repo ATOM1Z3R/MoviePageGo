@@ -1,12 +1,14 @@
 package endpoints
 
 import (
+	"api/consts"
 	"api/dto"
 	"api/mappers"
 	"api/models"
 	"api/repos"
 	"net/http"
 	"strconv"
+	"strings"
 
 	gin "github.com/gin-gonic/gin"
 )
@@ -41,15 +43,24 @@ func CreateMovie() gin.HandlerFunc {
 func UpdateMovie() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		movieId, _ := strconv.ParseUint(ctx.Param("id"), 0, 0)
-		var updatedMovie models.Movie
+		userRole := ctx.GetString("userRole")
+		userId := ctx.GetUint("userId")
 
-		if err := ctx.BindJSON(&updatedMovie); err != nil {
+		movie, err := movieRepo.GetMovieById(uint(movieId))
+		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		movie, err := movieRepo.GetMovieById(uint(movieId))
-		if err != nil {
+		if userRole != consts.ROLE_MOD {
+			if movie.UserId != userId {
+				ctx.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access to resource"})
+				return
+			}
+		}
+
+		var updatedMovie models.Movie
+		if err := ctx.BindJSON(&updatedMovie); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -59,8 +70,8 @@ func UpdateMovie() gin.HandlerFunc {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
-		ctx.JSON(http.StatusOK, movie)
+		movieDto := mappers.MovieModelToMovieDto(&movie)
+		ctx.JSON(http.StatusOK, movieDto)
 	}
 }
 
@@ -100,5 +111,54 @@ func GetMoviesByGenre() gin.HandlerFunc {
 		}
 		movieDtos := mappers.CreateSimpleMovieDtoList(movies)
 		ctx.JSON(http.StatusOK, movieDtos)
+	}
+}
+
+func GetOffsetMoviesCollection() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		page, err := strconv.Atoi(ctx.Param("page"))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		pageSize, err := strconv.Atoi(ctx.Param("page_size"))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if page == 0 {
+			page = 1
+		}
+		switch {
+		case pageSize > 20:
+			pageSize = 20
+		case pageSize <= 0:
+			pageSize = 5
+		}
+		offset := (page - 1) * pageSize
+
+		movies, err := movieRepo.GetMovieCollection(offset, pageSize)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		moviesDtos := mappers.CreateMovieDtoList(movies)
+		ctx.JSON(http.StatusOK, moviesDtos)
+	}
+}
+
+func GetMovieByName() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		title := strings.Trim(ctx.Param("title"), " ")
+
+		movie, err := movieRepo.GetMovieByName(title)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		movieDto := mappers.MovieModelToMovieDto(&movie)
+		ctx.JSON(http.StatusOK, movieDto)
 	}
 }

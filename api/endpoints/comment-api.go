@@ -2,7 +2,6 @@ package endpoints
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -16,7 +15,7 @@ var commentRepo = repos.InitCommentRepo()
 func CreateComment() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var commentDto dto.CreateCommentDto
-		movieId, _ := strconv.ParseUint(ctx.Param("id"), 0, 0)
+		// movieId, _ := strconv.ParseUint(ctx.Param("id"), 0, 0)
 
 		if err := ctx.BindJSON(&commentDto); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -36,7 +35,7 @@ func CreateComment() gin.HandlerFunc {
 			return
 		}
 
-		comments, err := commentRepo.GetCommentsByMovieId(uint(movieId))
+		comments, err := commentRepo.GetCommentsByMovieId(uint(comment.MovieId))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

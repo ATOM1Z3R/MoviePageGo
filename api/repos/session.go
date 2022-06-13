@@ -28,3 +28,7 @@ func MakeMigrations(db *gorm.DB) {
 		&models.Movie{},
 	)
 }
+
+func init() {
+	MakeMigrations(conn())
+}

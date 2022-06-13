@@ -67,3 +67,10 @@ func CreateSimpleMovieDtoList(movies []models.Movie) (movieDtos []*dto.SimpleMov
 	}
 	return movieDtos
 }
+
+func CreateMovieDtoList(movies []models.Movie) (movieDtos []*dto.MovieDto) {
+	for _, item := range movies {
+		movieDtos = append(movieDtos, MovieModelToMovieDto(&item))
+	}
+	return movieDtos
+}

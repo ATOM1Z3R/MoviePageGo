@@ -1,6 +1,7 @@
 package utilities
 
 import (
+	"api/consts"
 	"api/repos"
 	"fmt"
 	"log"
@@ -10,11 +11,13 @@ import (
 )
 
 type SignedDetails struct {
+	UserId    uint
 	UserName  string
 	Email     string
 	FirstName string
 	LastName  string
-	UserId    uint
+	UserRole  string
+	TokenType string
 	jwt.StandardClaims
 }
 
@@ -22,32 +25,60 @@ var SECRET_KEY = "asd89u9328yryw7fhwe8f73489f743ty87hg837h438f7he4387f"
 
 var userRepo = repos.InitUserRepo()
 
-func GenerateAllTokens(userName string, email string, firstName string, lastName string, userId uint) (signedToken string, signedRefreshToken string, err error) {
-	claims := &SignedDetails{
-		UserName:  userName,
-		Email:     email,
-		FirstName: firstName,
-		LastName:  lastName,
-		UserId:    userId,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
-		},
-	}
+func GenerateAllTokens(
+	userId uint,
+	userName string,
+	email string,
+	firstName string,
+	lastName string,
+	userRole string) (signedToken string, signedRefreshToken string, err error) {
 
-	refreshClaims := &SignedDetails{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(168)).Unix(),
-		},
-	}
-
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
-	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(SECRET_KEY))
+	token, err := GenerateAccessToken(userId, userName, email, firstName, lastName, userRole)
+	refreshToken, err := GenerateRefreshToken(userId)
 
 	if err != nil {
 		log.Panic(err)
 		return
 	}
 	return token, refreshToken, err
+}
+
+func GenerateRefreshToken(userId uint) (signedRefreshToken string, err error) {
+	refreshClaims := &SignedDetails{
+		UserId: userId,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(336)).Unix(),
+		},
+	}
+
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(SECRET_KEY))
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	return refreshToken, err
+}
+
+func GenerateAccessToken(userId uint, userName string, email string, firstName string, lastName string, userRole string) (
+	signedToken string, err error) {
+	claims := &SignedDetails{
+		UserName:  userName,
+		Email:     email,
+		FirstName: firstName,
+		LastName:  lastName,
+		UserId:    userId,
+		TokenType: consts.TOKEN_ACCESS,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(12)).Unix(),
+		},
+	}
+
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+	return token, err
 }
 
 func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
@@ -77,14 +108,4 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 		return
 	}
 	return claims, msg
-}
-
-func UpdateAllTokens(signedToken string, signedRefreshToken string, userId uint) {
-	user, _ := userRepo.GetUserById(userId)
-	user.Token = signedToken
-	user.RefreshToken = signedRefreshToken
-	if err := userRepo.UpdateUser(&user); err != nil {
-		log.Panic(err)
-		return
-	}
 }

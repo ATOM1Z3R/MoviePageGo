@@ -8,11 +8,13 @@ type ICommentRepo interface {
 }
 
 type IMovieRepo interface {
-	GetAllMovies() ([]models.Movie, error)
-	GetMovieById(id uint) (models.Movie, error)
-	CreateMovie(movie models.Movie) error
-	FilterMoviesByGenreId(id uint) ([]models.Movie, error)
-	UpdateMovie(movie *models.Movie) error
+	GetAllMovies() (movies []models.Movie, err error)
+	GetMovieById(id uint) (movie models.Movie, err error)
+	CreateMovie(movie models.Movie) (err error)
+	FilterMoviesByGenreId(genreId uint) (movies []models.Movie, err error)
+	UpdateMovie(movie *models.Movie) (err error)
+	GetMovieCollection(offset int, numberOfItems int) (movies []models.Movie, err error)
+	GetMovieByName(name string) (movie models.Movie, err error)
 }
 
 type IDirectorRepo interface {

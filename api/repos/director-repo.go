@@ -4,7 +4,6 @@ import "api/models"
 
 func InitDirectorRepo() IDirectorRepo {
 	db := conn()
-	MakeMigrations(db)
 	return &database{
 		session: db,
 	}

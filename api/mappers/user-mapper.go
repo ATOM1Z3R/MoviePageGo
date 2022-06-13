@@ -31,14 +31,12 @@ func UserModelToAuthorDto(author models.User) *dto.AuthorDto {
 
 func UserModelToUserDto(user models.User) *dto.UserDto {
 	return &dto.UserDto{
-		Id:           user.ID,
-		UserName:     user.UserName,
-		FirstName:    user.FirstName,
-		LastName:     user.LastName,
-		Email:        user.Email,
-		Token:        user.Token,
-		RefreshToken: user.RefreshToken,
-		CreatedDate:  user.CreatedAt.String(),
+		Id:          user.ID,
+		UserName:    user.UserName,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		Email:       user.Email,
+		CreatedDate: user.CreatedAt.String(),
 	}
 }
 

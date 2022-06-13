@@ -6,7 +6,6 @@ import (
 
 func InitUserRepo() IUserRepo {
 	db := conn()
-	MakeMigrations(db)
 	return &database{
 		session: db,
 	}

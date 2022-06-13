@@ -31,3 +31,7 @@ type LoginDto struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required,min=6"`
 }
+
+type RefreshTokenDto struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
+}

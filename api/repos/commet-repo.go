@@ -4,7 +4,6 @@ import "api/models"
 
 func InitCommentRepo() ICommentRepo {
 	db := conn()
-	MakeMigrations(db)
 	return &database{
 		session: db,
 	}

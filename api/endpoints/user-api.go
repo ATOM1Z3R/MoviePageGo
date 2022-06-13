@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"api/consts"
 	"api/dto"
 	"api/mappers"
 	"api/models"
@@ -32,9 +33,7 @@ func SignUp() gin.HandlerFunc {
 			return
 		}
 		user := mappers.CreateUserDtoToUserModel(userDto)
-		token, refreshToken, _ := utilities.GenerateAllTokens(user.UserName, user.Email, user.FirstName, user.LastName, user.ID)
-		user.Token = token
-		user.RefreshToken = refreshToken
+		user.UserType = consts.ROLE_USER
 		user.Password = utilities.HashPassword(user.Password)
 
 		if err := userRepo.CreateUser(user); err != nil {
@@ -58,19 +57,30 @@ func Login() gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Wrong email or password"})
 			return
 		}
+
 		passIsValid, msg := utilities.VerifyPassword(foundUser.Password, login.Password)
 		if passIsValid == false {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": msg})
 			return
 		}
-		token, refreshToken, err := utilities.GenerateAllTokens(foundUser.UserName, foundUser.Email, foundUser.FirstName, foundUser.LastName, foundUser.ID)
+		token, refreshToken, err := utilities.GenerateAllTokens(
+			foundUser.ID,
+			foundUser.UserName,
+			foundUser.Email,
+			foundUser.FirstName,
+			foundUser.LastName,
+			foundUser.UserType)
+
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		utilities.UpdateAllTokens(token, refreshToken, foundUser.ID)
-		userDto := mappers.UserModelToUserDto(foundUser)
-		ctx.JSON(http.StatusOK, userDto)
+
+		tokens := map[string]string{
+			"token":        token,
+			"refreshToken": refreshToken,
+		}
+		ctx.JSON(http.StatusOK, tokens)
 	}
 }
 
@@ -90,5 +100,39 @@ func GetUser() gin.HandlerFunc {
 		}
 		userDto := mappers.UserModelToUserDto(user)
 		ctx.JSON(http.StatusOK, userDto)
+	}
+}
+
+func RegenerateAccessToken() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var refreshToken dto.RefreshTokenDto
+		if err := ctx.BindJSON(&refreshToken); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		claims, errMsg := utilities.ValidateToken(refreshToken.RefreshToken)
+		if errMsg != "" {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": errMsg})
+			ctx.Abort()
+			return
+		}
+		if claims.TokenType != consts.TOKEN_REFRESH {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Wrong token type"})
+			return
+		}
+
+		user, err := userRepo.GetUserById(claims.UserId)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		token, err := utilities.GenerateAccessToken(user.ID, user.UserName, user.Email, user.FirstName, user.LastName, user.UserType)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusOK, map[string]string{"token": token})
 	}
 }

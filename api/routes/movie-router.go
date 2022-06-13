@@ -11,8 +11,10 @@ func MovieRouterPOST(incomingRoutes *gin.Engine) {
 	incomingRoutes.POST("movie/update/:id", endpoints.UpdateMovie())
 }
 
-func MovieRouter(incomingRoutes *gin.Engine) {
+func MovieRouterGET(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("movies/", endpoints.GetAllMovies())
 	incomingRoutes.GET("movie/:id", endpoints.GetMovie())
 	incomingRoutes.GET("movie/genre/:id", endpoints.GetMoviesByGenre())
+	incomingRoutes.GET("movies/:page/:page_size", endpoints.GetOffsetMoviesCollection())
+	incomingRoutes.GET("movies/search/:title", endpoints.GetMovieByName())
 }

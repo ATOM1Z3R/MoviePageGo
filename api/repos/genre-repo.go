@@ -4,7 +4,6 @@ import "api/models"
 
 func InitGenreRepo() IGenreRepo {
 	db := conn()
-	MakeMigrations(db)
 	return &database{
 		session: db,
 	}

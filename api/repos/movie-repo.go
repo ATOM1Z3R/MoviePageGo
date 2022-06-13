@@ -4,36 +4,43 @@ import "api/models"
 
 func InitMovieRepo() IMovieRepo {
 	db := conn()
-	MakeMigrations(db)
 	return &database{
 		session: db,
 	}
 }
 
-func (db *database) GetAllMovies() ([]models.Movie, error) {
-	var movies []models.Movie
-	res := db.session.Preload("Genre").Find(&movies)
-	return movies, res.Error
+func (db *database) GetAllMovies() (movies []models.Movie, err error) {
+	err = db.session.Preload("Genre").Find(&movies).Error
+	return movies, err
 }
 
-func (db *database) GetMovieById(id uint) (models.Movie, error) {
-	var movie models.Movie
-	res := db.session.Preload("Comments").Preload("User").Preload("Genre").Preload("Directors").First(&movie, id)
-	return movie, res.Error
+func (db *database) GetMovieById(id uint) (movie models.Movie, err error) {
+	preloads := db.session.Preload("Comments").Preload("User").Preload("Genre").Preload("Directors")
+	err = preloads.First(&movie, id).Error
+	return movie, err
 }
 
-func (db *database) CreateMovie(movie models.Movie) error {
-	res := db.session.Create(&movie)
-	return res.Error
+func (db *database) CreateMovie(movie models.Movie) (err error) {
+	return db.session.Create(&movie).Error
 }
 
-func (db *database) UpdateMovie(movie *models.Movie) error {
-	err := db.session.Save(&movie).Error
-	return err
+func (db *database) UpdateMovie(movie *models.Movie) (err error) {
+	return db.session.Save(&movie).Error
 }
 
-func (db *database) FilterMoviesByGenreId(genreId uint) ([]models.Movie, error) {
-	var movies []models.Movie
-	res := db.session.Where("movieId <> ?", genreId).Find(&movies)
-	return movies, res.Error
+func (db *database) FilterMoviesByGenreId(genreId uint) (movies []models.Movie, err error) {
+	err = db.session.Preload("Genre").Where("genre_Id = ?", genreId).Find(&movies).Error
+	return movies, err
+}
+
+func (db *database) GetMovieCollection(offset int, numberOfItems int) (movies []models.Movie, err error) {
+	preloads := db.session.Preload("Genre").Preload("Comments").Preload("Directors").Preload("User")
+	err = preloads.Offset(offset).Limit(numberOfItems).Find(&movies).Error
+	return movies, err
+}
+
+func (db *database) GetMovieByName(name string) (movie models.Movie, err error) {
+	preloads := db.session.Preload("Genre").Preload("Comments").Preload("Directors").Preload("User")
+	err = preloads.Where("Title LIKE ?", name).First(&movie).Error
+	return movie, err
 }
