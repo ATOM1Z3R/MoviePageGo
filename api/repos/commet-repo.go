@@ -2,6 +2,11 @@ package repos
 
 import "api/models"
 
+type ICommentRepo interface {
+	CreateComment(comment models.Comment) error
+	GetCommentsByMovieId(movieId uint) ([]models.Comment, error)
+}
+
 func InitCommentRepo() ICommentRepo {
 	db := conn()
 	return &database{

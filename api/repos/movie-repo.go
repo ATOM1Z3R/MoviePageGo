@@ -2,6 +2,16 @@ package repos
 
 import "api/models"
 
+type IMovieRepo interface {
+	GetAllMovies() (movies []models.Movie, err error)
+	GetMovieById(id uint) (movie models.Movie, err error)
+	CreateMovie(movie models.Movie) (err error)
+	FilterMoviesByGenreId(genreId uint) (movies []models.Movie, err error)
+	UpdateMovie(movie *models.Movie) (err error)
+	GetMovieCollection(offset int, numberOfItems int) (movies []models.Movie, err error)
+	GetMovieByName(name string) (movie models.Movie, err error)
+}
+
 func InitMovieRepo() IMovieRepo {
 	db := conn()
 	return &database{

@@ -4,6 +4,14 @@ import (
 	"api/models"
 )
 
+type IUserRepo interface {
+	CreateUser(user models.User) error
+	GetAllUsers() ([]models.User, error)
+	GetUserByEmail(email string) (models.User, error)
+	GetUserById(id uint) (models.User, error)
+	UpdateUser(user *models.User) error
+}
+
 func InitUserRepo() IUserRepo {
 	db := conn()
 	return &database{

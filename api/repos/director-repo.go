@@ -2,6 +2,11 @@ package repos
 
 import "api/models"
 
+type IDirectorRepo interface {
+	GetAllDirectors() ([]models.Director, error)
+	GetDirectorById(id uint) (models.Director, error)
+}
+
 func InitDirectorRepo() IDirectorRepo {
 	db := conn()
 	return &database{

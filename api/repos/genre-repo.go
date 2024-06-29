@@ -2,6 +2,11 @@ package repos
 
 import "api/models"
 
+type IGenreRepo interface {
+	GetAllGenres() ([]models.Genre, error)
+	GetGenreById(id uint) (models.Genre, error)
+}
+
 func InitGenreRepo() IGenreRepo {
 	db := conn()
 	return &database{
